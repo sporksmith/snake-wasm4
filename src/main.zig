@@ -20,18 +20,35 @@ export fn start() void {
 }
 
 var frame_count: u64 = 0;
-var prev_gamepad: u8 = 0;
 
 export fn update() void {
-    util.FRAME_ALLOCATOR.reset();
-    frame_count += 1;
+  //util.FRAME_ALLOCATOR.reset();
+  frame_count += 1;
 
-    const just_pressed = w4.GAMEPAD1.* ^ prev_gamepad;
-    prev_gamepad = w4.GAMEPAD1.*;
+  input();
 
-    snake.handle_input(just_pressed);
-    if (frame_count % 15 == 0) {
-      snake.update();
-    }
-    snake.draw();
+  if (frame_count % 15 == 0) {
+    snake.update();
+  }
+  snake.draw();
+}
+
+var prev_gamepad: u8 = 0;
+
+fn input() void {
+  const just_pressed = w4.GAMEPAD1.* ^ prev_gamepad;
+  prev_gamepad = w4.GAMEPAD1.*;
+
+  if (just_pressed & w4.BUTTON_LEFT != 0) {
+    snake.left();
+  }
+  if (just_pressed & w4.BUTTON_RIGHT != 0) {
+    snake.right();
+  }
+  if (just_pressed & w4.BUTTON_UP != 0) {
+    snake.up();
+  }
+  if (just_pressed & w4.BUTTON_DOWN!= 0) {
+    snake.down();
+  }
 }

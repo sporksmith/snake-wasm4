@@ -36,19 +36,20 @@ pub const Snake = struct {
       }
     }
 
-    pub fn handle_input(self: *Snake, just_pressed: u8) void {
-      if (just_pressed & w4.BUTTON_LEFT != 0) {
-        self.direction = Point.init(-1, 0);
-      }
-      if (just_pressed & w4.BUTTON_RIGHT != 0) {
-        self.direction = Point.init(1, 0);
-      }
-      if (just_pressed & w4.BUTTON_UP != 0) {
-        self.direction = Point.init(0, -1);
-      }
-      if (just_pressed & w4.BUTTON_DOWN!= 0) {
-        self.direction = Point.init(0, 1);
-      }
+    pub fn down(self: *Snake) void {
+      self.direction = Point.init(0, 1);
+    }
+
+    pub fn up(self: *Snake) void {
+      self.direction = Point.init(0, -1);
+    }
+  
+    pub fn left(self: *Snake) void {
+      self.direction = Point.init(-1, 0);
+    }
+
+    pub fn right(self: *Snake) void {
+      self.direction = Point.init(1, 0);
     }
 
     pub fn update(self: *Snake) void {
