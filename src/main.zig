@@ -1,28 +1,24 @@
 const Snake = @import("snake.zig").Snake;
+const Point = @import("snake.zig").Point;
+const Fruit = @import("fruit.zig").Fruit;
 const w4 = @import("wasm4.zig");
+const std = @import("std");
 const util = @import("util.zig");
 
-const smiley = [8]u8{
-    0b11000011,
-    0b10000001,
-    0b00100100,
-    0b00100100,
-    0b00000000,
-    0b00100100,
-    0b10011001,
-    0b11000011,
-};
-
+// TODO: seed
+var rnd = std.rand.DefaultPrng.init(0);
 var snake = Snake.init();
+var fruit = Fruit.init(Point.init(0, 0));
 
 export fn start() void {
-    w4.PALETTE.* = [_]u32{0xfbf7f3, 0xe5b083, 0x426e5d, 0x20283d};
+  w4.PALETTE.* = [_]u32{0xfbf7f3, 0xe5b083, 0x426e5d, 0x20283d};
+
+  fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
 }
 
 var frame_count: u64 = 0;
 
 export fn update() void {
-  //util.FRAME_ALLOCATOR.reset();
   frame_count += 1;
 
   input();
@@ -30,7 +26,12 @@ export fn update() void {
   if (frame_count % 15 == 0) {
     snake.update();
   }
+  if (frame_count % 150 == 0) {
+    util.trace("whoops", .{});
+    fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
+  }
   snake.draw();
+  fruit.draw();
 }
 
 var prev_gamepad: u8 = 0;

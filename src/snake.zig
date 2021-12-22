@@ -2,9 +2,9 @@ const w4 = @import("wasm4.zig");
 const util = @import("util.zig");
 const std = @import("std");
 
-const Point = struct {
+pub const Point = struct {
     x: i32, y: i32,
-    fn init(x: i32, y: i32) Point {
+    pub fn init(x: i32, y: i32) Point {
       return Point{.x=x,.y=y};
     }
     fn draw(self: *const Point) void {
