@@ -19,6 +19,7 @@ pub const Fruit = struct {
         const fruitFlags = 1; // BLIT_2BPP
         const fruitSprite = [16]u8{ 0x00, 0xa0, 0x02, 0x00, 0x0e, 0xf0, 0x36, 0x5c, 0xd6, 0x57, 0xd5, 0x57, 0x35, 0x5c, 0x0f, 0xf0 };
 
+        w4.DRAW_COLORS.* = 0x4320;
         w4.blit(&fruitSprite, self.position.x * 8, self.position.y * 8, fruitWidth, fruitHeight, fruitFlags);
     }
 };
