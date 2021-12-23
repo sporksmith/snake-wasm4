@@ -3,6 +3,10 @@ tutorial](https://wasm4.org/docs/tutorials/snake/goal), but in
 [zig](https://ziglang.org/) instead of
 [AssemblyScript](https://www.assemblyscript.org/).
 
+## Play now
+
+https://sporksmith.github.io/snake-wasm4/
+
 ## Running locally
 
 Build:
