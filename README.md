@@ -1,7 +1,9 @@
 Built following the [wasm-4 snake
-tutorial](https://wasm4.org/docs/tutorials/snake/goal), but in
-[zig](https://ziglang.org/) instead of
-[AssemblyScript](https://www.assemblyscript.org/).
+tutorial](https://wasm4.org/docs/tutorials/snake/goal), in
+[zig](https://ziglang.org/).
+
+See also https://github.com/christopher-kleine/wasm-4-tutorial-games for the
+tutorial author' alternate implementations in zig and other languages.
 
 ## Play now
 
@@ -32,6 +34,16 @@ mysteriously on debug builds (but works when compiling with e.g.
 ```
 $ w4 run-native zig-out/lib/cart.wasm
 ```
+
+## Interesting bits beyond the tutorial
+
+* `log` in `main.zig` is a callback for `std/log.zig`, and wires up the standard
+  library's logging to the one provided by wasm4 (`trace`). It uses a fixed
+  size stack-based buffer to format log strings.
+
+* `panic` in `main.zig` is a callback for `std/builtin.zig`, and overrides the
+  default `panic` handler. It logs the panic message before calling the default
+  handler (which doesn't).
 
 ## Thoughts
 
