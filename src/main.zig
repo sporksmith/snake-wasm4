@@ -134,3 +134,17 @@ pub fn log(
         std.log.warn("Failed to log: " ++ full_fmt, .{});
     }
 }
+
+// Override panic behavior.
+pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace) noreturn {
+    // Log as much as we can without calling the log api, in case that's what's panicking.
+    w4.trace("Panicking:");
+
+    // Attempt to log the trace, if present.
+    std.log.warn("panic msg: {s}", .{msg});
+    std.log.warn("panic trace: {?}", .{error_return_trace});
+
+    // Easiest way to satisfy `noreturn`. Doesn't seem to report anything, but at least
+    // returns control to the wasm engine with some kind of error.
+    std.builtin.default_panic(msg, error_return_trace);
+}
