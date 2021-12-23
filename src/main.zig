@@ -1,8 +1,10 @@
-const Snake = @import("snake.zig").Snake;
-const Point = @import("snake.zig").Point;
-const Fruit = @import("fruit.zig").Fruit;
+const snakemod = @import("snake.zig");
+const fruitmod = @import("fruit.zig");
 const w4 = @import("wasm4.zig");
 const std = @import("std");
+const Snake = snakemod.Snake;
+const Point = snakemod.Point;
+const Fruit = fruitmod.Fruit;
 
 // TODO: seed
 var rnd = std.rand.DefaultPrng.init(0);
