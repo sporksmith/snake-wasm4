@@ -60,6 +60,15 @@ pub const Snake = struct {
         self.direction = Point.init(1, 0);
     }
 
+    pub fn grow(self: *Snake) void {
+        self.body_len += 1;
+        self.body[self.body_len - 1] = self.body[self.body_len - 2];
+    }
+
+    pub fn head_collides_with(self: *const Snake, pt: Point) bool {
+        return std.meta.eql(self.body[0], pt);
+    }
+
     pub fn update(self: *Snake) void {
         var i: usize = self.body.len - 1;
         while (i >= 1) : (i -= 1) {

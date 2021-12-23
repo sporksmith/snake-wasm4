@@ -24,6 +24,12 @@ export fn update() void {
 
     input();
 
+    if (snake.head_collides_with(fruit.position)) {
+        slog.debug("yum", .{});
+        fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
+        snake.grow();
+    }
+
     if (frame_count % 15 == 0) {
         snake.update();
     }
