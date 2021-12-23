@@ -6,18 +6,19 @@ const std = @import("std");
 
 // TODO: seed
 var rnd = std.rand.DefaultPrng.init(0);
-var snake = Snake.init();
-var fruit = Fruit.init(Point.init(0, 0));
+var snake : Snake = undefined;
+var fruit : Fruit = undefined;
+var frame_count: u64 = undefined;
 
 const slog = std.log.scoped(.snek);
 
 export fn start() void {
     w4.PALETTE.* = [_]u32{ 0xfbf7f3, 0xe5b083, 0x426e5d, 0x20283d };
-
-    fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
+    frame_count = 0;
+    snake = Snake.init();
+    fruit = Fruit.init(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
 }
 
-var frame_count: u64 = 0;
 
 export fn update() void {
     frame_count += 1;
@@ -30,10 +31,16 @@ export fn update() void {
         snake.grow();
     }
 
-    if (frame_count % 15 == 0) {
+    if (snake.head_collides_with_body()) {
+        slog.debug("blargh", .{});
+        start();
+        return;
+    }
+
+    if (frame_count % 10 == 0) {
         snake.update();
     }
-    if (frame_count % 150 == 0) {
+    if (frame_count % 250 == 0) {
         slog.debug("yoink", .{});
         fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
     }

@@ -69,6 +69,15 @@ pub const Snake = struct {
         return std.meta.eql(self.body[0], pt);
     }
 
+    pub fn head_collides_with_body(self: *const Snake) bool {
+        for (self.body[1..self.body_len]) |part| {
+            if (self.head_collides_with(part))  {
+                return true;
+            }
+        }
+        return false;
+    }
+
     pub fn update(self: *Snake) void {
         var i: usize = self.body.len - 1;
         while (i >= 1) : (i -= 1) {
