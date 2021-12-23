@@ -1,5 +1,4 @@
 const w4 = @import("wasm4.zig");
-const util = @import("util.zig");
 const std = @import("std");
 
 pub const Point = struct {
