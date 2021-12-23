@@ -16,14 +16,22 @@ pub const Point = struct {
 };
 
 pub const Snake = struct {
-    body: [3]Point,
+    // Body segments, with head at body[0].  Preallocate the maximum number of
+    // body segments, which is enough to fill the play field.
+    body: [20 * 20]Point,
+    body_len: usize = 3,
     direction: Point,
 
     pub fn init() Snake {
-        return Snake{
-            .body = [_]Point{ Point.init(2, 0), Point.init(1, 0), Point.init(0, 0) },
+        var s = Snake{
+            .body = undefined,
+            .body_len = 3,
             .direction = Point.init(1, 0),
         };
+        s.body[0] = Point.init(2, 0);
+        s.body[1] = Point.init(1, 0);
+        s.body[2] = Point.init(0, 0);
+        return s;
     }
 
     pub fn draw(self: *const Snake) void {
@@ -31,7 +39,7 @@ pub const Snake = struct {
         self.body[0].draw();
 
         w4.DRAW_COLORS.* = 0x0043;
-        for (self.body[1..]) |part| {
+        for (self.body[1..self.body_len]) |part| {
             part.draw();
         }
     }
