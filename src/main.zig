@@ -29,7 +29,6 @@ export fn update() void {
     }
     if (frame_count % 150 == 0) {
         slog.debug("yoink", .{});
-        slog.debug("long log message but with no formatting. This should short circuit.", .{});
         fruit.move(Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20)));
     }
     snake.draw();
@@ -73,6 +72,7 @@ pub fn log(
 
     // This is a bit over-engineered, but notably removes the length
     // restriction for log messages that don't do any formatting.
+    // This also lets us safely recurse below.
     switch (@typeInfo(@TypeOf(args))) {
         .Struct => |s| {
             if (s.fields.len == 0) {
@@ -83,34 +83,32 @@ pub fn log(
         else => {},
     }
 
-    // Use a stack-allocated buffer to format the string.
-    var buf: [max_log_line_length]u8 = undefined;
+    const logged = blk: {
+        // Use a stack-allocated buffer to format the string.
+        var buf: [max_log_line_length]u8 = undefined;
 
-    // Wrap it in an allocator...
-    var allocator = std.heap.FixedBufferAllocator.init(&buf);
-    // ...so that we can wrap it an ArrayList...
-    var array_list = std.ArrayList(u8).init(allocator.allocator());
-    // ...which has a `writer` adapter...
-    const writer = array_list.writer();
+        // Wrap it in an allocator...
+        var allocator = std.heap.FixedBufferAllocator.init(&buf);
+        // ...so that we can wrap it an ArrayList...
+        var array_list = std.ArrayList(u8).init(allocator.allocator());
+        // ...which has a `writer` adapter...
+        const writer = array_list.writer();
 
-    var truncated = false;
-
-    // ...which we use to finally format the string.
-    writer.print(full_fmt, args) catch {
-        truncated = true;
+        // ...which we use to finally format the string.
+        writer.print(full_fmt, args) catch {
+            break :blk false;
+        };
+        writer.print("\x00", .{}) catch {
+            break :blk false;
+        };
+        w4.trace(array_list.items.ptr);
+        break :blk true;
     };
 
-    // Null terminate the string.
-    writer.print("\x00", .{}) catch {
-        _ = array_list.pop();
-        array_list.append(0) catch unreachable;
-        truncated = true;
-    };
-
-    w4.trace(array_list.items.ptr);
-    if (truncated) {
-        w4.trace("^ WARNING: truncated entry for format V");
-        w4.trace(comptime "> " ++ full_fmt);
-        w4.trace(comptime "^ WARNING: truncated for fmt: " ++ full_fmt);
+    if (!logged) {
+        // Warn and print the format string. This recurses, but since we aren't
+        // doing any formatting, we'll go through the short-circuit case, so
+        // can't recurse again.
+        std.log.warn("Failed to log: " ++ full_fmt, .{});
     }
 }
