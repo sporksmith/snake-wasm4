@@ -69,13 +69,17 @@ pub const Snake = struct {
         return std.meta.eql(self.body[0], pt);
     }
 
-    pub fn head_collides_with_body(self: *const Snake) bool {
+    pub fn body_collides_with(self: *const Snake, pt: Point) bool {
         for (self.body[1..self.body_len]) |part| {
-            if (self.head_collides_with(part))  {
+            if (std.meta.eql(part, pt)) {
                 return true;
             }
         }
         return false;
+    }
+
+    pub fn head_collides_with_body(self: *const Snake) bool {
+        return self.body_collides_with(self.body[0]);
     }
 
     pub fn update(self: *Snake) void {
