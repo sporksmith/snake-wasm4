@@ -71,7 +71,7 @@ fn input() void {
 
     prev_gamepad = w4.GAMEPAD1.*;
     if (just_pressed != 0) {
-        slog.warn("pressed: {d}", .{just_pressed});
+        slog.debug("pressed: {d}", .{just_pressed});
     }
 
     if (just_pressed & w4.BUTTON_LEFT != 0) {
