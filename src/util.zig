@@ -17,6 +17,7 @@ fn charType(c: u8) ?type {
         'd', 'c' => i32,
         'x' => u32,
         'f' => f64,
+        's' => u32,
         else => unreachable,
     };
 }
@@ -25,8 +26,28 @@ fn charType(c: u8) ?type {
 /// Probably better off using the logging framework with `log`, below,
 /// but using this instead can save a little bit of cart space.
 ///
-/// TODO: 
-///  * Handle strings.
+/// Examples:
+/// {
+///   util.tracef("literal terminated %s", .{"hi"});
+/// }
+/// {
+///   var s: [10:0]u8 = undefined;
+///   s[0]= 'h';
+///   s[1]= 'i';
+///   util.tracef("terminated type, but not terminated at runtime: %s", .{s});
+/// }
+/// {
+///   var s: [10:0]u8 = undefined;
+///   s[0]= 'h';
+///   s[1]= 'i';
+///   s[2]= 0;
+///   util.tracef("terminated type, terminated at runtime: %s", .{s});
+/// }
+/// {
+///   // Correctly doesn't compile
+///   //var s: [10]u8 = undefined;
+///   //util.tracef("unterminated %s", .{s});
+/// }
 pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
     comptime var space_needed = 0;
     {
@@ -64,14 +85,20 @@ pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
                 buf_slice = pack(buf_slice, @as(T, args[arg_idx]));
                 arg_idx += 1;
             },
-            //'s' => {
-            //    buf_slice = pack(buf_slice, @as(u32, @ptrToInt(@as([*:0]u8, args[arg_idx]))));
-            //    arg_idx += 1;
-            //},
+            's' => {
+                const s : [*:0]const u8 = switch (@typeInfo(@TypeOf(args[arg_idx]))) {
+                    .Pointer => args[arg_idx],
+                    .Array => &args[arg_idx],
+                    else => unreachable,
+                };
+                const T = charType('s') orelse unreachable;
+                buf_slice = pack(buf_slice, @as(T, @ptrToInt(s)));
+                arg_idx += 1;
+            },
             else => unreachable,
         }
     }
-    w4.tracef(msg.ptr, buf);
+    w4.tracef(msg.ptr, &buf);
 }
 
 /// Used by `std.log`, and partly cargo-culted from example in `std/log.zig`.
