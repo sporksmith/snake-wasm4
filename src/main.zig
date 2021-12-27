@@ -1,5 +1,6 @@
 const snakemod = @import("snake.zig");
 const fruitmod = @import("fruit.zig");
+const util = @import("util.zig");
 const w4 = @import("wasm4.zig");
 const std = @import("std");
 const Snake = snakemod.Snake;
@@ -12,14 +13,20 @@ var snake : Snake = undefined;
 var fruit = Fruit.init(Point.init(0, 0));
 var frame_count: u64 = undefined;
 
-const slog = std.log.scoped(.snek);
+// Override default panic handler.
+pub const panic = util.panic;
 
+// Configure logging.
+pub const log_level: std.log.Level = .warn;
+pub const log = util.log;
 export fn start() void {
     w4.PALETTE.* = [_]u32{ 0xfbf7f3, 0xe5b083, 0x426e5d, 0x20283d };
     frame_count = 0;
     snake = Snake.init();
     moveFruit();
 }
+
+const slog = std.log.scoped(.snek);
 
 export fn update() void {
     frame_count += 1;
@@ -61,9 +68,10 @@ var prev_gamepad: u8 = 0;
 
 fn input() void {
     const just_pressed = w4.GAMEPAD1.* ^ prev_gamepad;
+
     prev_gamepad = w4.GAMEPAD1.*;
     if (just_pressed != 0) {
-        slog.debug("pressed: {d}", .{just_pressed});
+        slog.warn("pressed: {d}", .{just_pressed});
     }
 
     if (just_pressed & w4.BUTTON_LEFT != 0) {
@@ -80,49 +88,3 @@ fn input() void {
     }
 }
 
-// Used by `std.log`, and partly cargo-culted from example in `std/log.zig`.
-// Uses a fixed-size buffer on the stack and plumbs through w4.trace.
-pub const log_level: std.log.Level = .debug;
-const max_log_line_length = 200;
-pub fn log(
-    comptime level: std.log.Level,
-    comptime scope: @TypeOf(.EnumLiteral),
-    comptime fmt: []const u8,
-    args: anytype
-) void {
-    const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt ++ "\x00";
-
-    // This is a bit over-engineered, but notably removes the length
-    // restriction for log messages that don't do any formatting.
-    // This also lets us safely recurse below.
-    switch (@typeInfo(@TypeOf(args))) {
-        .Struct => |s| {
-            if (s.fields.len == 0) {
-                w4.trace(full_fmt);
-                return;
-            }
-        },
-        else => {},
-    }
-
-    var buf: [max_log_line_length]u8 = undefined;
-    _ = std.fmt.bufPrint(&buf, full_fmt, args) catch {
-        std.log.warn("Failed to log: " ++ full_fmt, .{});
-        return;
-    };
-    w4.trace(&buf);
-}
-
-// Override panic behavior.
-pub fn panic(msg: []const u8, error_return_trace: ?*std.builtin.StackTrace) noreturn {
-    // Log as much as we can without calling the log api, in case that's what's panicking.
-    w4.trace("Panicking:");
-
-    // Attempt to log the trace, if present.
-    std.log.warn("panic msg: {s}", .{msg});
-    std.log.warn("panic trace: {?}", .{error_return_trace});
-
-    // Easiest way to satisfy `noreturn`. Doesn't seem to report anything, but at least
-    // returns control to the wasm engine with some kind of error.
-    std.builtin.default_panic(msg, error_return_trace);
-}
