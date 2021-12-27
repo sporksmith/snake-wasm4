@@ -83,14 +83,14 @@ fn input() void {
 // Used by `std.log`, and partly cargo-culted from example in `std/log.zig`.
 // Uses a fixed-size buffer on the stack and plumbs through w4.trace.
 pub const log_level: std.log.Level = .debug;
-const max_log_line_length = 100;
+const max_log_line_length = 200;
 pub fn log(
     comptime level: std.log.Level,
     comptime scope: @TypeOf(.EnumLiteral),
     comptime fmt: []const u8,
     args: anytype
 ) void {
-    const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt;
+    const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt ++ "\x00";
 
     // This is a bit over-engineered, but notably removes the length
     // restriction for log messages that don't do any formatting.
@@ -105,34 +105,12 @@ pub fn log(
         else => {},
     }
 
-    const logged = blk: {
-        // Use a stack-allocated buffer to format the string.
-        var buf: [max_log_line_length]u8 = undefined;
-
-        // Wrap it in an allocator...
-        var allocator = std.heap.FixedBufferAllocator.init(&buf);
-        // ...so that we can wrap it an ArrayList...
-        var array_list = std.ArrayList(u8).init(allocator.allocator());
-        // ...which has a `writer` adapter...
-        const writer = array_list.writer();
-
-        // ...which we use to finally format the string.
-        writer.print(full_fmt, args) catch {
-            break :blk false;
-        };
-        writer.print("\x00", .{}) catch {
-            break :blk false;
-        };
-        w4.trace(array_list.items.ptr);
-        break :blk true;
-    };
-
-    if (!logged) {
-        // Warn and print the format string. This recurses, but since we aren't
-        // doing any formatting, we'll go through the short-circuit case, so
-        // can't recurse again.
+    var buf: [max_log_line_length]u8 = undefined;
+    _ = std.fmt.bufPrint(&buf, full_fmt, args) catch {
         std.log.warn("Failed to log: " ++ full_fmt, .{});
-    }
+        return;
+    };
+    w4.trace(&buf);
 }
 
 // Override panic behavior.
