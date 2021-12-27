@@ -9,7 +9,7 @@ const Fruit = fruitmod.Fruit;
 
 // TODO: seed
 var rnd = std.rand.DefaultPrng.init(0);
-var snake : Snake = undefined;
+var snake: Snake = undefined;
 var fruit = Fruit.init(Point.init(0, 0));
 var frame_count: u64 = undefined;
 
@@ -59,7 +59,7 @@ export fn update() void {
 fn moveFruit() void {
     var pt = Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20));
     while (snake.head_collides_with(pt) or snake.body_collides_with(pt)) {
-      pt = Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20));
+        pt = Point.init(rnd.random().intRangeLessThan(i32, 0, 20), rnd.random().intRangeLessThan(i32, 0, 20));
     }
     fruit.move(pt);
 }
@@ -87,4 +87,3 @@ fn input() void {
         snake.down();
     }
 }
-

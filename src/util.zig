@@ -3,16 +3,14 @@ const w4 = @import("wasm4.zig");
 
 fn pack(dst: []u8, val: anytype) []u8 {
     const T = comptime @TypeOf(val);
-    const src = @ptrCast(*const [@sizeOf(T)] u8, &val);
-    if (dst.len < @sizeOf(T)) {
-        
-    }
+    const src = @ptrCast(*const [@sizeOf(T)]u8, &val);
+    if (dst.len < @sizeOf(T)) {}
     std.mem.copy(u8, dst[0..@sizeOf(T)], src);
     return dst[@sizeOf(T)..];
 }
 
 fn charType(c: u8) ?type {
-    return switch(c) {
+    return switch (c) {
         '%' => null,
         'd', 'c' => i32,
         'x' => u32,
@@ -51,26 +49,26 @@ fn charType(c: u8) ?type {
 pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
     comptime var space_needed = 0;
     {
-      comptime var msg_idx = 0;
-      inline while (msg_idx < msg.len) : (msg_idx += 1) {
-          if (msg[msg_idx] != '%') {
-              continue;
-          }
-          msg_idx += 1;
-          const T = charType(msg[msg_idx]) orelse continue;
-          space_needed += @sizeOf(T);
-      }
+        comptime var msg_idx = 0;
+        inline while (msg_idx < msg.len) : (msg_idx += 1) {
+            if (msg[msg_idx] != '%') {
+                continue;
+            }
+            msg_idx += 1;
+            const T = charType(msg[msg_idx]) orelse continue;
+            space_needed += @sizeOf(T);
+        }
     }
 
     if (space_needed == 0) {
-      // Nothing to format - short-circuit to simpler API.  (This is mostly to
-      // avoid the zero-length-buffer edge case below).
-      w4.trace(msg);
-      return;
+        // Nothing to format - short-circuit to simpler API.  (This is mostly to
+        // avoid the zero-length-buffer edge case below).
+        w4.trace(msg);
+        return;
     }
 
     var buf: [space_needed]u8 = undefined;
-    var buf_slice : []u8 = buf[0..];
+    var buf_slice: []u8 = buf[0..];
     comptime var arg_idx: usize = 0;
     comptime var msg_idx: usize = 0;
     inline while (msg_idx < msg.len) : (msg_idx += 1) {
@@ -78,7 +76,7 @@ pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
             continue;
         }
         msg_idx += 1;
-        switch(msg[msg_idx]) {
+        switch (msg[msg_idx]) {
             '%' => {},
             'd', 'c', 'x', 'f' => |c| {
                 const T = charType(c) orelse unreachable;
@@ -86,7 +84,7 @@ pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
                 arg_idx += 1;
             },
             's' => {
-                const s : [*:0]const u8 = switch (@typeInfo(@TypeOf(args[arg_idx]))) {
+                const s: [*:0]const u8 = switch (@typeInfo(@TypeOf(args[arg_idx]))) {
                     .Pointer => args[arg_idx],
                     .Array => &args[arg_idx],
                     else => unreachable,
@@ -104,12 +102,7 @@ pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
 /// Used by `std.log`, and partly cargo-culted from example in `std/log.zig`.
 /// Uses a fixed-size buffer on the stack and plumbs through w4.trace.
 const max_log_line_length = 200;
-pub fn log(
-    comptime level: std.log.Level,
-    comptime scope: @TypeOf(.EnumLiteral),
-    comptime fmt: []const u8,
-    args: anytype
-) void {
+pub fn log(comptime level: std.log.Level, comptime scope: @TypeOf(.EnumLiteral), comptime fmt: []const u8, args: anytype) void {
     const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt ++ "\x00";
 
     // This is a bit over-engineered, but notably removes the length
