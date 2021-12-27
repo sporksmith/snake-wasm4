@@ -27,7 +27,7 @@ fn charType(c: u8) ?type {
 ///
 /// TODO: 
 ///  * Handle strings.
-pub fn tracef(comptime msg: []const u8, args: anytype) void {
+pub fn tracef(comptime msg: [:0]const u8, args: anytype) void {
     comptime var space_needed = 0;
     {
       comptime var msg_idx = 0;
@@ -39,6 +39,13 @@ pub fn tracef(comptime msg: []const u8, args: anytype) void {
           const T = charType(msg[msg_idx]) orelse continue;
           space_needed += @sizeOf(T);
       }
+    }
+
+    if (space_needed == 0) {
+      // Nothing to format - short-circuit to simpler API.  (This is mostly to
+      // avoid the zero-length-buffer edge case below).
+      w4.trace(msg);
+      return;
     }
 
     var buf: [space_needed]u8 = undefined;
@@ -64,7 +71,7 @@ pub fn tracef(comptime msg: []const u8, args: anytype) void {
             else => unreachable,
         }
     }
-    w4.tracef(msg.ptr, &buf);
+    w4.tracef(msg.ptr, buf);
 }
 
 /// Used by `std.log`, and partly cargo-culted from example in `std/log.zig`.
@@ -76,7 +83,7 @@ pub fn log(
     comptime fmt: []const u8,
     args: anytype
 ) void {
-    const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt;
+    const full_fmt = comptime "[" ++ level.asText() ++ "] (" ++ @tagName(scope) ++ ") " ++ fmt ++ "\x00";
 
     // This is a bit over-engineered, but notably removes the length
     // restriction for log messages that don't do any formatting.
@@ -91,7 +98,7 @@ pub fn log(
         else => {},
     }
 
-    var buf: [max_log_line_length]u8 = undefined;
+    var buf: [max_log_line_length:0]u8 = undefined;
     _ = std.fmt.bufPrint(&buf, full_fmt, args) catch {
         std.log.warn("Failed to log: " ++ full_fmt, .{});
         return;
